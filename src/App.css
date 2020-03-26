@@ -8,5 +8,6 @@ a {
 }
 * {
     box-sizing: border-box; 
-    /* padding marigin and border doesnt effekt elemnt size */
+    /* padding marigin and border doesnt effekt elemnt size
+     */
 }
