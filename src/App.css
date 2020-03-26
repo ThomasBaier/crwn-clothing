@@ -6,3 +6,8 @@ a {
     text-decoration: none;
     color: black;
 }
+* {
+    box-sizing: border-box; 
+    /* padding marigin and border doesnt effekt elemnt size
+     */
+}
