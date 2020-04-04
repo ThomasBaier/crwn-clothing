@@ -1,22 +1,29 @@
 import React from 'react';
 import './App.css';
-import {Switch, Route} from 'react-router-dom';
+
+import {Switch, Route, Redirect} from 'react-router-dom';
+
+import { auth, createUserProfileDocument } from './firebase/firebase.utils'
+
+import {connect} from 'react-redux'
+import { setCurrentUser } from './redux/user/user.action'
+import { selectCurrentUser } from './redux/user/user.selector';
+import { createStructuredSelector } from 'reselect'
+
 import HomePage from './pages/homepage/homepage.component';
 import ShopPage from './pages/shop/shop.component';
 import Header from './components/header/header.component';
 import SignInAndSignUpPage from './pages/sign-and-sign-up/sign-in-and-sign-up.component';
-import { auth, createUserProfileDocument } from './firebase/firebase.utils'
+import CheckoutPage from './pages/checkout/checkout.component';
+
+
 
 class App extends React.Component { // convert to 
-  constructor() {
-    super();
-    this.state = {
-      currentUser:null
-    }
-  }
+
   unsubscribeFromAuth = null;
 
   componentDidMount() {
+    const {setCurrentUser} = this.props;
     // observer for the user signin state
     this.unsubscribeFromAuth = 
     auth.onAuthStateChanged(async userAuth =>{
@@ -26,16 +33,14 @@ class App extends React.Component { // convert to
         console.log(userRef)
         // subscribe to data change //similar onAuthStateChange
         userRef.onSnapshot(snapshot => { 
-          this.setState({
-          currentUser: {
+          setCurrentUser({
             id: snapshot.id,
             ...snapshot.data()
-          }}, () => [
-            console.log('currentUser', this.state.currentUser) // will be called after async setState is finished
-          ])
+          });
         });
       }
-      this.setState({currentUser: userAuth}) // sets user to null oAuth returns null
+      setCurrentUser(userAuth) 
+      // sets user to null oAuth returns null
     });
   }
   componentWillUnmount() {
@@ -45,17 +50,38 @@ class App extends React.Component { // convert to
   render(){
   return (
     <div>
-      <Header currentUser = { this.state.currentUser } />
+      <Header />
       <Switch>
         <Route exact path='/' component={HomePage}/>
         <Route path='/shop' component={ShopPage}/>
-        <Route path='/signin' component={SignInAndSignUpPage}/>
+        <Route exact path='/checkout' component={CheckoutPage}/>
+        <Route 
+          exact 
+          path='/signin' 
+          render={() => 
+          this.props.currentUser ? (
+            <Redirect to ='/' />
+            ): (
+              <SignInAndSignUpPage/>
+          )}/>
      </Switch>
     </div>
   );
   }
 }
-export default App;
+// gives access to this.state.currentUser
+const mapStateToProps = createStructuredSelector({
+    currentUser: selectCurrentUser
+});
+
+const mapDispatchToProps = dispatch => ({
+  setCurrentUser: user => dispatch(setCurrentUser(user))
+});
+
+export default connect(
+  mapStateToProps, 
+  mapDispatchToProps
+  )(App);
 // make dynamik urls by using <Link to={`${props.match.url}/13`}></Link>
 // which calls the RoutsPath and adds something on top.
 // Switch: Makes sure only to render the route it fits first
